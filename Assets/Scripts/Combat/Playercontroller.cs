@@ -151,10 +151,22 @@ public class Playercontroller : MonoBehaviour {
 	}
 	
 
+	void Shoot(){
+		print("Shoot - " + prefabProjectile.ToString());
+		m_animator.SetBool("Shoot", true);
+		if(myState == playerState.run){
+			m_animator.SetLayerWeight(1, 1f);
+		}
+		StartCoroutine("Cooldown", cooldownTime);
+	}
+
 	IEnumerator Cooldown(float time){
 		shotReady = false;
 		print(shotReady.ToString());
-		yield return new WaitForSeconds(time);
+		yield return new WaitForSeconds(time/2f);
+		GameObject obj = StaticPool.GetObj(prefabProjectile);
+		obj.GetComponent<ProjectileTwo>().Reset(gameObject, Camera.main.transform.forward);
+		yield return new WaitForSeconds(time/2);
 		m_animator.SetLayerWeight(1, 0f);
 		m_animator.SetBool("Shoot", false);
 
@@ -208,24 +220,14 @@ public class Playercontroller : MonoBehaviour {
 		}
 		while(transform.position.y >= initHeight){
 			print ("fooker");
-			body.AddForce(-Vector3.up * 200f, ForceMode.Force);
+			body.AddForce(-Vector3.up * 100f, ForceMode.Force);
 			yield return new WaitForFixedUpdate();
 		}
 		yield break;
 		
 	}
+	
 
-	//call on key down
-	void Shoot(){
-		print("Shoot - " + prefabProjectile.ToString());
-		GameObject obj = StaticPool.GetObj(prefabProjectile);
-		obj.GetComponent<ProjectileTwo>().Reset(gameObject, Camera.main.transform.forward);
-		m_animator.SetBool("Shoot", true);
-		if(myState == playerState.run){
-			m_animator.SetLayerWeight(1, 1f);
-		}
-		StartCoroutine("Cooldown", cooldownTime);
-	}
 
 	//returns a list of all GameObjects with tag enemy that are visible to the camera
 	List<GameObject> GetTargets(){

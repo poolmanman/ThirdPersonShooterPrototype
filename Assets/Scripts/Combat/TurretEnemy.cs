@@ -2,7 +2,7 @@
 using System.Collections;
 using UnityEngine.UI;
 
-public class Enemy : MonoBehaviour {
+public class TurretEnemy : MonoBehaviour {
 	enum enemyStates {idle, attacking, dead};
 	enemyStates myState;
 	float agroRange = 15f;

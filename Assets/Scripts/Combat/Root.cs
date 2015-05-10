@@ -1,9 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class LockOnCam : MonoBehaviour {
-
-	Transform target;
+public class Root : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
@@ -12,10 +10,6 @@ public class LockOnCam : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		transform.LookAt(target);
-	}
-
-	public void SwitchTarger(Transform newTarget){
-		target = newTarget;
+	
 	}
 }
