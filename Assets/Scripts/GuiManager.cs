@@ -11,15 +11,12 @@ public class GuiManager : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		print ("Start");
 		player = GameObject.FindGameObjectWithTag("Player"); // this is terrible drag and drop u lazy fuk
 		playerStats = player.GetComponent<Stats>();
 	}
 	
 	// Update is called once per frame
 	void Update () {
-		print ("update you fuk");
-		print(playerStats.ReturnHealthFraction());
 		playerHealthBar.value = playerStats.ReturnHealthFraction();
 	}
 

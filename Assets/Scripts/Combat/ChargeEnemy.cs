@@ -109,7 +109,7 @@ public class ChargeEnemy : MonoBehaviour {
 	}
 
 	bool AttackRangeCheck(){
-		if(Vector3.Distance(player.transform.position, transform.position) < 2.5f){
+		if(Vector3.Distance(player.transform.position, transform.position) < 6f){
 			m_animator.SetBool("Attacking", true);
 			return true;
 			myState = enemyStates.attacking;
