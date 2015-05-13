@@ -6,8 +6,8 @@ using UnityEngine.UI;
 
 public class PlayerController2 : MonoBehaviour {
 
-	enum playerState{idle, run, dash, jump};
-	playerState myState;
+	public enum playerState{idle, run, dash, jump};
+	public playerState myState;
 
 	public float speed;
 	Transform cam;
@@ -34,6 +34,13 @@ public class PlayerController2 : MonoBehaviour {
 
 	bool ascending = false;
 	bool dashAvailiable = true;
+	bool dashing = false;
+	float dashLength = 5f;
+	Vector3 dashStartPos;
+	Vector3 dashEndPos;
+	Vector3 lastMoveDir = Vector3.zero;
+
+	public Slider dashCooldownSlider;
 
 	StaticPool staticPool;
 	void Awake(){
@@ -53,11 +60,12 @@ public class PlayerController2 : MonoBehaviour {
 	void Update(){
 
 //		print("Time: " + Time.time + "\n" + "Horz: " +  Input.GetAxis("Horizontal") + "\nVert: " + Input.GetAxis("Vertical"));
-		moveDir = (Vector3.forward * Input.GetAxisRaw("Vertical")) + (Vector3.right * Input.GetAxisRaw("Horizontal"));
-		if(moveDir.magnitude >= 1f){
-			dashAvailiable = false;
-			StartCoroutine(Dash(Time.time, moveDir));
-		}
+//		moveDir = (Vector3.forward * Input.GetAxisRaw("Vertical")) + (Vector3.right * Input.GetAxisRaw("Horizontal"));
+//		moveDir = (new Vector3(transform.forward.x, 0f, transform.forward.z) * Input.GetAxisRaw("Vertical")) + (new Vector3(transform.right.x, 0f, transform.right.z) * Input.GetAxisRaw("Horizontal"));
+//		if(moveDir.magnitude >= 1f && dashAvailiable){
+////			StartCoroutine(Dash(Time.time, moveDir));
+//			StartCoroutine(Dash2(Time.time, moveDir));
+//		}
 
 	}
 
@@ -97,6 +105,7 @@ public class PlayerController2 : MonoBehaviour {
 				m_animator.SetBool("Jump" ,true);
 				init = true;
 				myState = playerState.jump;
+
 				break;
 			}
 			break;
@@ -104,9 +113,27 @@ public class PlayerController2 : MonoBehaviour {
 			if(init){
 				init = false;
 			}
-			transform.Translate(moveDir * speed, Space.Self);
+			lastMoveDir = moveDir;
+			moveDir = (new Vector3(transform.forward.x, 0f, transform.forward.z) * Input.GetAxisRaw("Vertical")) + (new Vector3(transform.right.x, 0f, transform.right.z) * Input.GetAxisRaw("Horizontal"));
+//			if(moveDir.magnitude >= 1f && dashAvailiable && lastMoveDir.magnitude < 0.99f){
+//				//			StartCoroutine(Dash(Time.time, moveDir));
+//				StartCoroutine(Dash2(Time.time, moveDir));
+//			}
+			transform.Translate(moveDir * speed, Space.World);
+
 			lookTransform.transform.forward = (transform.forward * Input.GetAxisRaw("Vertical")) + (transform.right * Input.GetAxisRaw("Horizontal"));
 
+//			if(dashing && dashAvailiable){
+//				init = true;
+//				myState = playerState.dash;
+//			}
+			if(Input.GetButtonDown("X") && dashAvailiable){
+				init = true;
+				myState = playerState.dash;
+			}
+//			else if(dashing){
+//				dashing = false;
+//			}
 			if(Input.GetButtonDown("Jump")){
 				m_animator.SetBool("Jump" ,true);
 				init = true;
@@ -115,7 +142,29 @@ public class PlayerController2 : MonoBehaviour {
 			if(Input.GetAxisRaw("Horizontal") == 0 && Input.GetAxisRaw("Vertical") == 0){
 				m_animator.SetBool("Run", false);
 				init = true;
+				lookTransform.transform.forward = lastMoveDir;
 				myState = playerState.idle;
+			}
+			break;
+
+		case playerState.dash:
+			if(init){
+				m_animator.SetLayerWeight(2,1);
+				dashStartPos = transform.position;
+				dashAvailiable = false;
+
+				init = false;
+			}
+//			m_body.AddForce(moveDir * 25f, ForceMode.VelocityChange);
+			m_body.AddForce(new Vector3(moveDir.x * 25f, 0f, moveDir.z * 25f), ForceMode.VelocityChange);
+
+			if(Vector3.Distance(transform.position, dashStartPos) > dashLength){
+				m_body.velocity = Vector3.zero;
+				init = true;
+				dashing = false;
+				StartCoroutine(DashCoolDown(1.5f));
+				m_animator.SetLayerWeight(2,0);
+				myState = playerState.run;
 			}
 			break;
 		case playerState.jump:
@@ -151,6 +200,7 @@ public class PlayerController2 : MonoBehaviour {
 
 	void Shoot(){
 		m_animator.SetBool("Shoot", true);
+
 		if(myState == playerState.run){
 			m_animator.SetLayerWeight(1, 1f);
 		}
@@ -253,12 +303,18 @@ public class PlayerController2 : MonoBehaviour {
 	IEnumerator Dash(float time, Vector3 direction){
 		float elapsedTime = Time.time - time;
 		float endTime = 0.2f;
-		float dashDuration = 1f;
+		float dashDuration = 0.25f;
 		float dashTime = 0f;
+		float dashCooldown = 3f;
+
+		float correctInputThresh = 0.75f; //how similar the new input needs to be from direction to start dashing
+		float exitInputThresh = -0.5f; //how far away the control stick needs to face before we kill the coroutine
+		float resetInputMag = 0.9f; //magnitiude of last input most be atleast this small for the current oen to trigger a dash
 		bool correctInput = false;
 		List<Vector3> inputs = new List<Vector3>();
 		inputs.Add(direction);
 		inputs.Add(direction);
+		//waiting on input
 		while(elapsedTime < endTime && !correctInput){
 			if(moveDir.magnitude > 1f){
 				inputs.Add(moveDir.normalized);
@@ -266,23 +322,85 @@ public class PlayerController2 : MonoBehaviour {
 			else{
 				inputs.Add(moveDir);
 			}
-			print (inputs[inputs.Count -1].magnitude);
+//			print (inputs[inputs.Count -1].magnitude);
 //			print (Vector3.Dot(inputs[inputs.Count - 1].normalized, direction.normalized) + "    " + inputs[inputs.Count -1] + "     " + inputs[inputs.Count -2]);
-			if(Vector3.Dot (inputs[inputs.Count - 1].normalized, direction.normalized) > 0.8f && inputs[inputs.Count - 1].magnitude >= 1f && inputs[inputs.Count - 2].magnitude < 0.9f){
+			if(Vector3.Dot(inputs[inputs.Count - 1].normalized, direction.normalized) < exitInputThresh){
+				StopCoroutine("Dash");
+			}
+			if(Vector3.Dot (inputs[inputs.Count - 1].normalized, direction.normalized) > correctInputThresh && inputs[inputs.Count - 1].magnitude >= 1f && inputs[inputs.Count - 2].magnitude < resetInputMag && dashAvailiable){
 				correctInput = true;
+				dashing = true;
+				dashAvailiable = false;
 				dashTime = Time.time;
-				print ("DASH!      " + Time.time);
+//				print ("DASH!      " + Time.time);
 
 			}
+			else if(!dashAvailiable){
+				StopCoroutine("Dash");
+			}
+
 			yield return new WaitForEndOfFrame();
 		}
+		//dashing in a direction
 		while(Time.time - dashTime < dashDuration){
+			m_animator.SetLayerWeight(2,1);
+			m_animator.SetBool("Dash", true);
+			speed = 0.75f;
+			moveDir = direction;
+			yield return new WaitForEndOfFrame();
+		}
+		dashing = false;
+		m_animator.SetBool("Dash", false);
+		speed = 0.25f;
+		m_animator.SetLayerWeight(2,0);
+		dashTime = Time.time;
+
+		while(Time.time - dashTime < dashCooldown){
+			dashCooldownSlider.value = ((Time.time - dashTime)/dashCooldown);
 			yield return new WaitForEndOfFrame();
 		}
 		dashAvailiable = true;
 
 	}
+	IEnumerator Dash2(float time, Vector3 direction){
+		float elapsedTime = Time.time - time;
+		float endTime = 0.1f; //the time im looking for inputs
+		float correctInputThresh = 0.75f; //how similar the new input needs to be from direction to start dashing
+		float exitInputThresh = -0.5f; //how far away the control stick needs to face before we kill the coroutine
+		float resetInputMag = 0.8f; //magnitiude of last input most be atleast this small for the current oen to trigger a dash
+		bool correctInput = false;
+		List<Vector3> inputs = new List<Vector3>();
+		inputs.Add(direction);
+		inputs.Add(direction);
 
+		while(elapsedTime < endTime && !correctInput){
+			print(moveDir);
+			if(moveDir.magnitude > 1f){
+				inputs.Add(moveDir.normalized);
+			}
+			else{
+				inputs.Add(moveDir);
+			}
+
+			if(Vector3.Dot (inputs[inputs.Count - 1].normalized, direction.normalized) > correctInputThresh && inputs[inputs.Count - 1].magnitude >= 1f && inputs[inputs.Count - 2].magnitude < resetInputMag){
+				correctInput = true;
+				dashing = true;
+			}
+			
+			yield return new WaitForFixedUpdate();
+		}
+	
+	}
+
+	IEnumerator DashCoolDown(float time){
+		float startTime = Time.time;
+		while((Time.time - startTime) < time){
+			dashCooldownSlider.value = (Time.time - startTime)/time;
+			yield return new WaitForFixedUpdate();
+		}
+		dashCooldownSlider.value = 1f;
+		dashAvailiable = true;
+	}
 
 }
 

@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using System.Collections;
 using UnityStandardAssets.CrossPlatformInput;
 
 namespace UnityStandardAssets.Cameras
@@ -120,7 +121,7 @@ namespace UnityStandardAssets.Cameras
 				}
 
 			}
-			
+
 		}
 	}
 }

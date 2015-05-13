@@ -84,7 +84,7 @@ public class ChargeEnemy : MonoBehaviour {
 	}
 	
 	void Shoot(){
-		print("Shoot - " + prefabProjectile.ToString());
+//		print("Shoot - " + prefabProjectile.ToString());
 		GameObject obj = StaticPool.GetObj(prefabProjectile);
 		obj.GetComponent<ProjectileTwo>().Reset(gameObject, transform.forward);
 		StartCoroutine("Cooldown", cooldownTime);
@@ -93,11 +93,8 @@ public class ChargeEnemy : MonoBehaviour {
 
 	IEnumerator Cooldown(float time){
 		shotReady = false;
-		print(shotReady.ToString());
 		yield return new WaitForSeconds(time);
-		
 		shotReady = true;
-		print(shotReady.ToString());
 	}
 	
 	void AgroCheck(){
