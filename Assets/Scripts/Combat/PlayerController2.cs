@@ -6,14 +6,14 @@ using UnityEngine.UI;
 
 public class PlayerController2 : MonoBehaviour {
 
-	public enum playerState{idle, run, dash, jump};
+	public enum playerState{idle, run, dash, jump, attack, speacial};
 	public playerState myState;
 
 	public float speed;
 	Transform cam;
 	Vector3 moveDir;
 	bool shotReady = true;
-	float cooldownTime = 1f;
+	float cooldownTime = 0.15f;
 	public GameObject prefabProjectile;
 	public GameObject lookTransform;
 	Animator m_animator;
@@ -39,6 +39,13 @@ public class PlayerController2 : MonoBehaviour {
 	Vector3 dashStartPos;
 	Vector3 dashEndPos;
 	Vector3 lastMoveDir = Vector3.zero;
+
+	float attackTimer = 0f;
+	float attackExitTime = 0.1f;
+	public GameObject attackCollider;
+	List<Stats> enemiesToMeleeAttack = new List<Stats>();
+	public GameObject slashFXPrefab;
+	public GameObject attackLightFX;
 
 	public Slider dashCooldownSlider;
 
@@ -108,6 +115,10 @@ public class PlayerController2 : MonoBehaviour {
 
 				break;
 			}
+			if(Input.GetButton("Circle")){
+				init = true;
+				myState = playerState.attack;
+			}
 			break;
 		case playerState.run:
 			if(init){
@@ -131,10 +142,14 @@ public class PlayerController2 : MonoBehaviour {
 				init = true;
 				myState = playerState.dash;
 			}
+			if(Input.GetButton("Circle")){
+				init = true;
+				myState = playerState.attack;
+			}
 //			else if(dashing){
 //				dashing = false;
 //			}
-			if(Input.GetButtonDown("Jump")){
+			if(Input.GetButton("Jump")){
 				m_animator.SetBool("Jump" ,true);
 				init = true;
 				myState = playerState.jump;
@@ -162,7 +177,7 @@ public class PlayerController2 : MonoBehaviour {
 				m_body.velocity = Vector3.zero;
 				init = true;
 				dashing = false;
-				StartCoroutine(DashCoolDown(1.5f));
+				StartCoroutine(DashCoolDown(0.25f));
 				m_animator.SetLayerWeight(2,0);
 				myState = playerState.run;
 			}
@@ -187,6 +202,23 @@ public class PlayerController2 : MonoBehaviour {
 				init = true;
 				myState = playerState.idle;
 			}
+			break;
+		case playerState.attack:
+			if(init){
+				m_animator.SetBool("Attack", true);
+//				attackCollider.SetActive(true);
+				init = false;
+			}
+			if(Input.GetButton("Circle")){
+				m_animator.SetInteger("RandomAttack", Random.Range(0,3));
+				attackTimer = 0f;
+			}
+			if(attackTimer > attackExitTime){
+				m_animator.SetBool("Attack", false);
+//				attackCollider.SetActive(false);
+				myState = playerState.idle;
+			}
+			attackTimer += Time.deltaTime;
 			break;
 		}
 		if(Input.GetButton("Fire1") && shotReady){
@@ -221,11 +253,11 @@ public class PlayerController2 : MonoBehaviour {
 	//using gravity and forces ya
 	IEnumerator JumpThree(float initHeight, float endHeight){
 		while(transform.position.y <= endHeight*0.75f){
-			m_body.AddForce(Vector3.up * 100f, ForceMode.Force);
+			m_body.AddForce(Vector3.up * 20f, ForceMode.Force);
 			yield return new WaitForFixedUpdate();
 		}
 		while(transform.position.y >= initHeight){
-			m_body.AddForce(-Vector3.up * 100f, ForceMode.Force);
+			m_body.AddForce(-Vector3.up * 10f, ForceMode.Force);
 			yield return new WaitForFixedUpdate();
 		}
 		yield break;
@@ -401,6 +433,37 @@ public class PlayerController2 : MonoBehaviour {
 		dashCooldownSlider.value = 1f;
 		dashAvailiable = true;
 	}
+
+	//called by attack collider
+	public void AddToAttackList(Stats enemy){
+		enemiesToMeleeAttack.Add(enemy);
+	}
+	public void RemoveFromAttackList(Stats enemy){
+		enemiesToMeleeAttack.Remove(enemy);
+	}
+	public void MeleeAttack(){
+		foreach(Stats enemy in enemiesToMeleeAttack){
+			enemy.TakeDamager(3);
+		}
+		if(enemiesToMeleeAttack.Count > 0){
+			GetComponent<Stats>().StartShake();
+			GameObject temp = StaticPool.GetObj(slashFXPrefab);
+			temp.transform.SetParent(lookTransform.transform, false);
+			temp.transform.localPosition = (new Vector3(0f,1f,-1f));
+			temp.transform.Rotate(0f,180f,0f);
+			temp.GetComponentInChildren<ParticleSystem>().enableEmission = true;
+			attackLightFX.SetActive(true);
+			StartCoroutine(Lightflicker(0.4f));
+		}
+
+
+	}
+
+	IEnumerator Lightflicker(float duration){
+		yield return new WaitForSeconds(duration);
+		attackLightFX.SetActive(false);
+	}
+
 
 }
 

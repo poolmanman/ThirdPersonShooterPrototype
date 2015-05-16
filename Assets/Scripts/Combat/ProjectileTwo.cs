@@ -22,7 +22,7 @@ public class ProjectileTwo : MonoBehaviour {
 	// Update is called once per frame
 	void FixedUpdate () {
 		//destroy once iv traveled given distance;
-		if(Vector3.Distance(transform.position, startPos) > 40f){
+		if(Vector3.Distance(transform.position, startPos) > 60f){
 			gameObject.SetActive(false);
 		}
 	}
@@ -36,11 +36,11 @@ public class ProjectileTwo : MonoBehaviour {
 	
 	public void Reset(GameObject whoShotMe, Vector3 dir){
 		m_body.velocity = Vector3.zero;
-		transform.position = new Vector3(whoShotMe.transform.position.x, whoShotMe.transform.position.y + 2f, whoShotMe.transform.position.z) + whoShotMe.transform.forward * 2f;
+		transform.position = new Vector3(whoShotMe.transform.position.x, whoShotMe.transform.position.y + 1.5f, whoShotMe.transform.position.z) + whoShotMe.transform.forward * 1f;
 		startPos = transform.position;
 		transform.forward = dir;
 //		print (cam.forward);
-		m_body.AddForce(transform.forward * 4000f);
+		m_body.AddForce(transform.forward * 9000f);
 	}
 
 	void OnEnable(){

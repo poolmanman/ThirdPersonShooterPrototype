@@ -58,6 +58,7 @@ public class Projectile : MonoBehaviour {
 //		print ("D = " + m_ray.direction);
 //		pt = m_ray.GetPoint(40f);
 		startTime = Time.time;
+		gameObject.layer = 1;
 		startMarker = new Vector3(player.position.x, player.position.y + 2f, player.position.z);
 		endMarker = cam.forward * 40f;
 		transform.forward = cam.forward;

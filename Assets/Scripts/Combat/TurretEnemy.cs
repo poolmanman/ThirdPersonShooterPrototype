@@ -1,12 +1,13 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine.UI;
 
 public class TurretEnemy : MonoBehaviour {
-	enum enemyStates {idle, attacking, dead};
-	enemyStates myState;
+	public enum enemyStates {idle, attacking, dead};
+	public enemyStates myState;
 	float agroRange = 15f;
-	GameObject player;
+	public GameObject player;
 	bool agro = false;
 	bool stateInit = true;
 	Stats m_stats;

@@ -50,7 +50,7 @@ public class Stats : MonoBehaviour {
 			yield return null;
 		}
 		
-		Camera.main.transform.parent.localPosition = new Vector3(0f,2f,0f);
+		Camera.main.transform.parent.localPosition = new Vector3(0.5f,1.2f,1.2f);
 	}
 	
 	public void StartShake(){
