@@ -17,7 +17,7 @@ public class GuiManager : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-//		playerHealthBar.value = playerStats.ReturnHealthFraction();
+		playerHealthBar.value = playerStats.ReturnHealthFraction();
 	}
 
 

@@ -55,6 +55,6 @@ public class Stats : MonoBehaviour {
 	
 	public void StartShake(){
 		StartCoroutine(Shake(0.25f,0.2f));
-		print("SHAKE");
+//		print("SHAKE");
 	}
 }

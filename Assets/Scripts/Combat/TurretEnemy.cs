@@ -74,11 +74,11 @@ public class TurretEnemy : MonoBehaviour {
 
 	IEnumerator Cooldown(float time){
 		shotReady = false;
-		print(shotReady.ToString());
+//		print(shotReady.ToString());
 		yield return new WaitForSeconds(time);
 		
 		shotReady = true;
-		print(shotReady.ToString());
+//		print(shotReady.ToString());
 	}
 
 	void AgroCheck(){

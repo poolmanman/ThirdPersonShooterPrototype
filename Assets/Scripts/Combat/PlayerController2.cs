@@ -35,7 +35,7 @@ public class PlayerController2 : MonoBehaviour {
 	bool ascending = false;
 	bool dashAvailiable = true;
 	bool dashing = false;
-	float dashLength = 5f;
+	float dashLength = 3f;
 	Vector3 dashStartPos;
 	Vector3 dashEndPos;
 	Vector3 lastMoveDir = Vector3.zero;
@@ -48,6 +48,7 @@ public class PlayerController2 : MonoBehaviour {
 	public GameObject attackLightFX;
 
 	public Slider dashCooldownSlider;
+	bool EnemyContact = false; //send to state machine if touching player;
 
 	StaticPool staticPool;
 	void Awake(){
@@ -138,7 +139,7 @@ public class PlayerController2 : MonoBehaviour {
 //				init = true;
 //				myState = playerState.dash;
 //			}
-			if(Input.GetButtonDown("X") && dashAvailiable){
+			if((Input.GetButtonDown("X") || Input.GetButtonDown("R1"))&& dashAvailiable){
 				init = true;
 				myState = playerState.dash;
 			}
@@ -173,6 +174,8 @@ public class PlayerController2 : MonoBehaviour {
 //			m_body.AddForce(moveDir * 25f, ForceMode.VelocityChange);
 			m_body.AddForce(new Vector3(moveDir.x * 25f, 0f, moveDir.z * 25f), ForceMode.VelocityChange);
 
+
+			
 			if(Vector3.Distance(transform.position, dashStartPos) > dashLength){
 				m_body.velocity = Vector3.zero;
 				init = true;
@@ -181,6 +184,16 @@ public class PlayerController2 : MonoBehaviour {
 				m_animator.SetLayerWeight(2,0);
 				myState = playerState.run;
 			}
+			if(EnemyContact){
+				m_body.velocity = Vector3.zero;
+				init = true;
+				dashing = false;
+				StartCoroutine(DashCoolDown(0.25f));
+				m_animator.SetLayerWeight(2,0);
+				EnemyContact = false;
+				myState = playerState.attack;
+				
+			}
 			break;
 		case playerState.jump:
 			if(init){
@@ -188,7 +201,7 @@ public class PlayerController2 : MonoBehaviour {
 			}
 			m_animator.SetBool("Jump" ,false);
 			ascending = true;
-			StartCoroutine(JumpThree(transform.position.y, transform.position.y + 5f));
+			StartCoroutine(JumpThree(transform.position.y, transform.position.y + 2f));
 			moveDir = (Vector3.forward * Input.GetAxisRaw("Vertical")) + (Vector3.right * Input.GetAxisRaw("Horizontal"));
 			transform.Translate(moveDir * speed, Space.Self);
 			lookTransform.transform.forward = (transform.forward * Input.GetAxisRaw("Vertical")) + (transform.right * Input.GetAxisRaw("Horizontal"));
@@ -253,7 +266,7 @@ public class PlayerController2 : MonoBehaviour {
 	//using gravity and forces ya
 	IEnumerator JumpThree(float initHeight, float endHeight){
 		while(transform.position.y <= endHeight*0.75f){
-			m_body.AddForce(Vector3.up * 20f, ForceMode.Force);
+			m_body.AddForce((Vector3.up + (transform.forward * 3f)) * 6f, ForceMode.Force);
 			yield return new WaitForFixedUpdate();
 		}
 		while(transform.position.y >= initHeight){
@@ -462,6 +475,15 @@ public class PlayerController2 : MonoBehaviour {
 	IEnumerator Lightflicker(float duration){
 		yield return new WaitForSeconds(duration);
 		attackLightFX.SetActive(false);
+	}
+
+	void OnTriggerEnter(Collider other){
+		if(other.gameObject.tag == "Enemy"){
+			if(myState == playerState.dash){
+				EnemyContact = true;
+			}
+		}
+
 	}
 
 

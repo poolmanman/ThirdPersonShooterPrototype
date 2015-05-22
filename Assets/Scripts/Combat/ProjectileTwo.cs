@@ -40,7 +40,7 @@ public class ProjectileTwo : MonoBehaviour {
 		startPos = transform.position;
 		transform.forward = dir;
 //		print (cam.forward);
-		m_body.AddForce(transform.forward * 9000f);
+		m_body.AddForce(transform.forward * 700f);
 	}
 
 	void OnEnable(){
